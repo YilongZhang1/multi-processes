@@ -1,0 +1,233 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD>
+ <TITLE>ssyxf</TITLE>
+<META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <script type="text/javascript">
+  <!--
+   function ZweiFrames(URL1,F1,URL2,F2)
+   {
+    parent.frames[F1].location.href=URL1;
+    parent.frames[F2].location.href=URL2;
+   }
+  //-->
+  </script>
+</HEAD>
+<BODY BGCOLOR="#ffffff">
+<HR>
+<H3><CENTER>test/tests.cpp</CENTER></H3><HR>
+<PRE>
+#include &lt;fcntl.h&gt;
+#include &lt;stdio.h&gt;
+#include &quot;gtest/gtest.h&quot;
+<A NAME="0"></A>#include &lt;pthread.h&gt;
+#include &quot;../include/processing_scheduling.h&quot;
+// Using a C library requires extern &quot;C&quot; to prevent function managling
+<FONT color="#0000ff"><A HREF="javascript:ZweiFrames('match19-1.html#0',3,'match19-top.html#0',1)"><IMG SRC="forward.gif" ALT="other" BORDER="0" ALIGN="right"></A><B>extern &quot;C&quot; {
+#include &lt;dyn_array.h&gt;
+}
+
+//#include &quot;../include/dyn_array.h&quot;
+
+#define NUM_PCB 30
+#define QUANTUM 4 // Used for Robin Round for process as the run time limit
+
+unsigned int score;
+unsigned int total;
+
+class GradeEnvironment : public testing::Environment {
+    public:
+        virtual void SetUp() {
+            score = 0;
+            total = 160;
+        }
+        virtual void TearDown() {
+            ::testing::Test::RecordProperty(&quot;points_given&quot;, score);
+            ::testing::Test::RecordProperty(&quot;points_total&quot;, total);
+            std::cout &lt;&lt; &quot;SCORE: &quot; &lt;&lt; score &lt;&lt; '/' &lt;&lt; total &lt;&lt; std::endl;
+        }
+};
+
+
+/* 
+ * LOAD PROCESS CONTROL TESTS
+*/
+
+TEST(load_process_control_blocks, fileNotFound){
+	
+	dyn_array_t *a = load_process_control_blocks(&quot;nullfile.file&quot;);
+	ASSERT_EQ(a,(dyn_array_t*)NULL);</B></FONT>
+}
+
+TEST(load_process_control_blocks, NullFileName){
+	dyn_array_t *a = load_process_control_blocks(NULL);
+	ASSERT_EQ(a,(dyn_array_t*)NULL);
+}
+
+TEST(load_process_control_blocks, TrickyBadFileName){
+	dyn_array_t *a = load_process_control_blocks(&quot;&quot;);
+	ASSERT_EQ(a,(dyn_array_t*)NULL);
+}
+
+TEST(load_process_control_blocks, TrickyBadFileNameNewLine){
+	dyn_array_t *a = load_process_control_blocks(&quot;\n&quot;);
+	ASSERT_EQ(a,(dyn_array_t*)NULL);
+}
+
+/*
+ * FIRST COME FIRST SERVE TESTS
+ */
+
+TEST(first_come_first_serve, invalidInput){
+
+	dyn_array_t *a = dyn_array_create(0,sizeof(ProcessControlBlock_t),NULL);
+	ScheduleResult_t *sr = new ScheduleResult_t;
+
+	memset(sr,0,sizeof(ScheduleResult_t));
+
+<A NAME="1"></A>	//all of the pcbs are &quot;finished&quot;
+	ProcessControlBlock_t data[3]{
+		[0] = {0,0,1},
+<FONT color="#f63526"><A HREF="javascript:ZweiFrames('match19-1.html#1',3,'match19-top.html#1',1)"><IMG SRC="forward.gif" ALT="other" BORDER="0" ALIGN="right"></A><B>		[1] = {0,0,1},
+		[2] = {0,0,1}
+	};
+
+	dyn_array_push_back(a,&amp;data[2]);
+	dyn_array_push_back(a,&amp;data[1]);
+	dyn_array_push_back(a,&amp;data[0]);
+	
+	bool result = first_come_first_serve(a,sr);
+	ASSERT_EQ(false,result);
+	delete sr;
+	dyn_array_destroy(a);
+
+}
+
+
+TEST(first_come_first_serve, nullArrayData){
+	
+<A NAME="2"></A>	dyn_array_t *a = NULL;</B></FONT>
+	ScheduleResult_t *sr = new ScheduleResult_t;
+	
+<FONT color="#77bfc7"><A HREF="javascript:ZweiFrames('match19-1.html#2',3,'match19-top.html#2',1)"><IMG SRC="forward.gif" ALT="other" BORDER="0" ALIGN="right"></A><B>	bool result = first_come_first_serve(a,sr);
+	EXPECT_EQ(false,result);
+	
+	delete sr;
+}
+
+TEST(first_come_first_serve, nullScheduleResult){
+	dyn_array_t *a = dyn_array_create(0,sizeof(ProcessControlBlock_t),NULL);
+	// ask about last parameter ( destruct_func)
+	ScheduleResult_t *sr = NULL;
+	
+	bool result = first_come_first_serve(a,sr);
+	EXPECT_EQ(false, result);
+	
+	dyn_array_destroy(a);
+	// do i need to invoke dyn_array_destroy or does it not matter? same thing for above with ScheduleResult_T 
+	//
+}
+
+
+
+//need one more test for first_come_first_serve
+
+/*
+ * PRIORITY TESTS
+ */
+
+TEST(priority, nullArrayData){
+	dyn_array_t *a = NULL;
+	ScheduleResult_t *sr = new ScheduleResult_t;
+	
+	bool result = priority(a,sr);
+	EXPECT_EQ(false, result);
+	
+	delete sr;
+}
+
+TEST(priority, nullScheduleResult){
+	dyn_array_t *a=dyn_array_create(0,sizeof(ProcessControlBlock_t), NULL);
+	ScheduleResult_t *sr = NULL;</B></FONT>
+
+	bool result = priority(a,sr);
+	EXPECT_EQ(false,result);
+	dyn_array_destroy(a);
+}
+
+TEST(priority, negNumbers){
+	dyn_array_t *a = dyn_array_create(0,sizeof(ProcessControlBlock_t),NULL);
+        ScheduleResult_t *sr = new ScheduleResult_t;
+
+        memset(sr,0,sizeof(ScheduleResult_t));
+	
+	ProcessControlBlock_t data[3]{
+		[0] = {-1,5,0},
+		[1] = {12,-2,0},
+		[2] = {3,3,0}
+
+	};
+
+	dyn_array_push_back(a,&amp;data[2]);
+        dyn_array_push_back(a,&amp;data[1]);
+        dyn_array_push_back(a,&amp;data[0]);
+
+        bool result = priority(a,sr);
+<A NAME="3"></A>        ASSERT_EQ(false,result);
+        delete sr;
+        dyn_array_destroy(a);
+<FONT color="#6cc417"><A HREF="javascript:ZweiFrames('match19-1.html#3',3,'match19-top.html#3',1)"><IMG SRC="forward.gif" ALT="other" BORDER="0" ALIGN="right"></A><B>}
+
+
+/*
+ * ROUND_ROBIN TESTS
+ */
+
+TEST(round_robin, nullArrayData){
+	dyn_array_t *a = NULL;
+	ScheduleResult_t *sr = new ScheduleResult_t;
+
+	bool result = round_robin(a,sr,QUANTUM);
+	EXPECT_EQ(false, result);
+
+	delete sr;
+}
+
+TEST(round_robin, nullScheduleResult){
+	dyn_array_t *a = dyn_array_create(0,sizeof(ProcessControlBlock_t),NULL);
+	ScheduleResult_t *sr = NULL;</B></FONT>
+
+	bool result = round_robin(a,sr,QUANTUM);
+	EXPECT_EQ(false, result);
+	dyn_array_destroy(a);
+}
+
+TEST(round_robin, negQuantum){
+	dyn_array_t *a = dyn_array_create(0,sizeof(ProcessControlBlock_t),NULL);
+        ScheduleResult_t *sr = new ScheduleResult_t;
+
+	memset(sr,0,sizeof(ScheduleResult_t));
+	ProcessControlBlock_t data[3]{
+		[0] = {24,0,0},
+		[1] = {3,0,0},
+		[2] = {3,0,0}
+<A NAME="4"></A>	};
+	
+	ASSERT_EQ(false,round_robin(a,sr,-4));
+<FONT color="#151b8d"><A HREF="javascript:ZweiFrames('match19-1.html#4',3,'match19-top.html#4',1)"><IMG SRC="forward.gif" ALT="other" BORDER="0" ALIGN="right"></A><B>	delete sr;
+	dyn_array_destroy(a);
+	
+}
+//need one more round_robin
+
+int main(int argc, char **argv) {
+    ::testing::InitGoogleTest(&amp;argc, argv);
+    ::testing::AddGlobalTestEnvironment(new GradeEnvironment);
+    return RUN_ALL_TESTS();
+
+}</B></FONT>
+
+
+</PRE>
+</BODY>
+</HTML>

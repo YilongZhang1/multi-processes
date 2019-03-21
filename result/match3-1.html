@@ -1,0 +1,309 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD>
+ <TITLE>kjc882</TITLE>
+<META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <script type="text/javascript">
+  <!--
+   function ZweiFrames(URL1,F1,URL2,F2)
+   {
+    parent.frames[F1].location.href=URL1;
+    parent.frames[F2].location.href=URL2;
+   }
+  //-->
+  </script>
+</HEAD>
+<BODY BGCOLOR="#ffffff" style="margin-left:25">
+<HR>
+<H3><CENTER>test/tests.cpp</CENTER></H3><HR>
+<PRE>
+#include &lt;fcntl.h&gt;
+#include &lt;stdio.h&gt;
+#include &quot;gtest/gtest.h&quot;
+<A NAME="0"></A>#include &lt;pthread.h&gt;
+#include &quot;../include/processing_scheduling.h&quot;
+// Using a C library requires extern &quot;C&quot; to prevent function managling
+<FONT color="#0000ff"><div style="position:absolute;left:0"><A HREF="javascript:ZweiFrames('match3-0.html#0',2,'match3-top.html#0',1)"><IMG SRC="back.gif" ALT="other" BORDER="0" ALIGN="left"></A></div><B>extern &quot;C&quot; {
+#include &lt;dyn_array.h&gt;
+}
+
+
+#define NUM_PCB 30
+#define QUANTUM 4 // Used for Robin Round for process as the run time limit
+
+unsigned int score;
+unsigned int total;
+
+class GradeEnvironment : public testing::Environment {
+    public:
+        virtual void SetUp() {
+            score = 0;
+            total = 160;
+        }
+        virtual void TearDown() {
+            ::testing::Test::RecordProperty(&quot;points_given&quot;, score);
+            ::testing::Test::RecordProperty(&quot;points_total&quot;, total);
+            std::cout &lt;&lt; &quot;SCORE: &quot; &lt;&lt; score &lt;&lt; '/' &lt;&lt; total &lt;&lt; std::endl;
+        }
+};
+
+
+// LOAD PROCESS CONTROL BLOCKS TESTS
+
+TEST (load_process_control_blocks, nullFilePath){</B></FONT>
+	ASSERT_EQ(NULL, load_process_control_blocks(NULL));
+
+	score += 5;
+}
+
+TEST (load_process_control_blocks, badFileName){
+<A NAME="6"></A>	ASSERT_EQ(NULL, load_process_control_blocks(&quot;test.bad&quot;));
+
+	score += 5;
+<FONT color="#50ebec"><div style="position:absolute;left:0"><A HREF="javascript:ZweiFrames('match3-0.html#6',2,'match3-top.html#6',1)"><IMG SRC="back.gif" ALT="other" BORDER="0" ALIGN="left"></A></div><B>} 
+
+TEST (load_process_control_blocks, goodTest){
+	const char* f = &quot;../test/PCBs.bin&quot;;
+	int32_t pcbN = NUM_PCB;
+	int32_t pcbs[NUM_PCB][2];
+
+	for(int32_t i = 0; i &lt; pcbN; i++){
+		pcbs[i][0] = rand() % 15 + 1;
+		pcbs[i][1] = i;
+	}
+
+	mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP;
+	int flags = O_CREAT | O_TRUNC | O_WRONLY;
+	int fp = open(f, flags, mode);
+
+	write(fp, &amp;pcbN, sizeof(int32_t));
+	write(fp, pcbs, pcbN * sizeof(int32_t)*2);
+	
+	close(fp);
+	dyn_array_t* d = load_process_control_blocks (f);
+	ASSERT_NE(d, (dyn_array_t*) NULL);
+	for(size_t j = 0; j &lt; dyn_array_size(d); j++){
+		ProcessControlBlock_t * pPCB = (ProcessControlBlock_t *)dyn_array_at(d, j);
+		ASSERT_EQ(pPCB -&gt; remaining_burst_time, pcbs[j][0]);
+		ASSERT_EQ(pPCB -&gt; priority, pcbs[j][1]);
+	}</B></FONT>
+<A NAME="3"></A>
+	dyn_array_destroy(d);
+
+<FONT color="#6cc417"><div style="position:absolute;left:0"><A HREF="javascript:ZweiFrames('match3-0.html#3',2,'match3-top.html#3',1)"><IMG SRC="back.gif" ALT="other" BORDER="0" ALIGN="left"></A></div><B>	score += 10;
+}
+
+// FIRST COME FIRST SERVED TESTS
+
+TEST (first_come_first_serve, nullInput){
+	ScheduleResult_t *s = new ScheduleResult_t;
+	dyn_array_t * pcbs = NULL;
+	bool res = first_come_first_serve (pcbs,s);
+
+	ASSERT_EQ(false, res);
+	delete s;
+
+	score += 5;
+}
+<A NAME="1"></A>
+TEST (first_come_first_serve, nullSchedule){
+	ScheduleResult_t *s = new ScheduleResult_t;</B></FONT>
+<FONT color="#f63526"><div style="position:absolute;left:0"><A HREF="javascript:ZweiFrames('match3-0.html#1',2,'match3-top.html#1',1)"><IMG SRC="back.gif" ALT="other" BORDER="0" ALIGN="left"></A></div><B>	dyn_array_t *pcbs = dyn_array_create(0, sizeof(ProcessControlBlock_t), NULL);
+	bool res = first_come_first_serve(pcbs, s);
+	ASSERT_EQ(false, res);
+	dyn_array_destroy(pcbs);
+
+	score += 5;
+}
+
+TEST (first_come_first_serve, goodInput){
+	ScheduleResult_t *s = new ScheduleResult_t;
+	dyn_array_t * pcbs = dyn_array_create(0, sizeof(ProcessControlBlock_t), NULL);
+	memset(s, 0, sizeof(ScheduleResult_t));
+
+	ProcessControlBlock_t data[3] = {
+		[0] = {6, 0, 0},
+		[1] = {9, 0, 0},
+		[2] = {12, 0, 0}
+	};
+
+	dyn_array_push_back(pcbs, &amp;data[2]);
+	dyn_array_push_back(pcbs, &amp;data[1]);
+	dyn_array_push_back(pcbs, &amp;data[0]);
+
+	bool res = first_come_first_serve(pcbs, s);
+	ASSERT_EQ(true, res);
+	float answer[3] = {16, 7, 27};</B></FONT>
+
+	ASSERT_EQ(answer[0], s -&gt; average_wall_clock_time);
+	ASSERT_EQ(answer[1], s -&gt; average_latency_time);
+	ASSERT_EQ(answer[2], s -&gt; total_run_time);
+	dyn_array_destroy(pcbs);
+
+	score += 10;
+}
+
+// PRIORITY TESTS
+
+TEST (priority, nullInput){
+	ScheduleResult_t *s = new ScheduleResult_t;
+	dyn_array_t * pcbs = NULL;
+
+	bool res = priority(pcbs, s);
+	ASSERT_EQ(false, res);
+	dyn_array_destroy(pcbs);
+
+	score += 5;
+}
+<A NAME="4"></A>
+TEST (priority, nullSchedule){
+	ScheduleResult_t *s = new ScheduleResult_t;
+<FONT color="#151b8d"><div style="position:absolute;left:0"><A HREF="javascript:ZweiFrames('match3-0.html#4',2,'match3-top.html#4',1)"><IMG SRC="back.gif" ALT="other" BORDER="0" ALIGN="left"></A></div><B>        dyn_array_t *pcbs = dyn_array_create(0, sizeof(ProcessControlBlock_t), NULL);
+        bool res = priority(pcbs, s);
+        ASSERT_EQ(false, res);
+        dyn_array_destroy(pcbs);
+
+        score += 5;
+}
+
+TEST (priority, goodTest){
+	ScheduleResult_t *s = new ScheduleResult_t;
+        dyn_array_t *pcbs = dyn_array_create(0, sizeof(ProcessControlBlock_t), NULL);
+
+	memset(s, 0, sizeof(ScheduleResult_t));
+
+        ProcessControlBlock_t data[3] = {
+                [0] = {6, 1, 0},
+                [1] = {9, 2, 0},
+                [2] = {12, 3, 0}
+        };
+
+        dyn_array_push_back(pcbs, &amp;data[2]);
+        dyn_array_push_back(pcbs, &amp;data[1]);
+        dyn_array_push_back(pcbs, &amp;data[0]);
+
+        bool res = first_come_first_serve(pcbs, s);
+        ASSERT_EQ(true, res);
+        float answer[3] = {16, 7, 27};</B></FONT>
+
+        ASSERT_EQ(answer[0], s -&gt; average_wall_clock_time);
+        ASSERT_EQ(answer[1], s -&gt; average_latency_time);
+        ASSERT_EQ(answer[2], s -&gt; total_run_time);
+        dyn_array_destroy(pcbs);
+	
+        score += 5;
+}
+
+// ROUND ROBIN TESTS
+
+TEST (round_robin, nullInput){
+	ScheduleResult_t *s = new ScheduleResult_t;
+        dyn_array_t * pcbs = NULL;
+
+        bool res = round_robin(pcbs, s, QUANTUM);
+        ASSERT_EQ(false, res);
+        dyn_array_destroy(pcbs);
+
+        score += 5;
+}
+
+TEST (round_robin, nullSchedule){
+        ScheduleResult_t *s = new ScheduleResult_t;
+        dyn_array_t *pcbs = dyn_array_create(0, sizeof(ProcessControlBlock_t), NULL);
+        bool res = round_robin(pcbs, s, QUANTUM);
+<A NAME="2"></A>        ASSERT_EQ(false, res);
+        dyn_array_destroy(pcbs);
+
+<FONT color="#77bfc7"><div style="position:absolute;left:0"><A HREF="javascript:ZweiFrames('match3-0.html#2',2,'match3-top.html#2',1)"><IMG SRC="back.gif" ALT="other" BORDER="0" ALIGN="left"></A></div><B>        score += 5;
+}
+
+TEST (round_robin, goodTest){
+	ScheduleResult_t *s = new ScheduleResult_t;
+        dyn_array_t *pcbs = dyn_array_create(0, sizeof(ProcessControlBlock_t), NULL);
+
+        memset(s, 0, sizeof(ScheduleResult_t));
+
+        ProcessControlBlock_t data[3] = {
+                [0] = {6, 0, 0},
+                [1] = {9, 0, 0},
+                [2] = {12, 0, 0}
+        };
+
+        dyn_array_push_back(pcbs, &amp;data[2]);
+        dyn_array_push_back(pcbs, &amp;data[1]);
+        dyn_array_push_back(pcbs, &amp;data[0]);
+
+        bool res = round_robin(pcbs, s, QUANTUM);
+        ASSERT_EQ(true, res);
+        float answer[3] = {21.333333, 11, 27};</B></FONT>
+
+        ASSERT_EQ(answer[0], s -&gt; average_wall_clock_time);
+        ASSERT_EQ(answer[1], s -&gt; average_latency_time);
+        ASSERT_EQ(answer[2], s -&gt; total_run_time);
+        dyn_array_destroy(pcbs);
+
+        score += 5;
+
+}
+
+// SHORTEST JOB FIRST TESTS
+
+TEST (shortest_job_first, nullInput){
+        ScheduleResult_t *s = new ScheduleResult_t;
+        dyn_array_t * pcbs = NULL;
+
+        bool res = shortest_job_first(pcbs, s);
+        ASSERT_EQ(false, res);
+        dyn_array_destroy(pcbs);
+
+        score += 5;
+}
+
+TEST (shortest_job_first, nullSchedule){
+        ScheduleResult_t *s = new ScheduleResult_t;
+        dyn_array_t *pcbs = dyn_array_create(0, sizeof(ProcessControlBlock_t), NULL);
+        bool res = shortest_job_first(pcbs, s);
+<A NAME="5"></A>        ASSERT_EQ(false, res);
+        dyn_array_destroy(pcbs);
+
+<FONT color="#c8c2a7"><div style="position:absolute;left:0"><A HREF="javascript:ZweiFrames('match3-0.html#5',2,'match3-top.html#5',1)"><IMG SRC="back.gif" ALT="other" BORDER="0" ALIGN="left"></A></div><B>        score += 5;
+}
+
+TEST (shortest_job_first, goodTest){
+        ScheduleResult_t *s = new ScheduleResult_t;
+        dyn_array_t *pcbs = dyn_array_create(0, sizeof(ProcessControlBlock_t), NULL);
+
+        memset(s, 0, sizeof(ScheduleResult_t));
+
+        ProcessControlBlock_t data[3] = {
+                [0] = {6, 0, 0},
+                [1] = {9, 0, 0},
+                [2] = {12, 0, 0}
+        };
+
+        dyn_array_push_back(pcbs, &amp;data[2]);
+        dyn_array_push_back(pcbs, &amp;data[1]);
+        dyn_array_push_back(pcbs, &amp;data[0]);
+
+        bool res = shortest_job_first(pcbs, s);
+        ASSERT_EQ(true, res);
+        float answer[3] = {16, 7, 27};</B></FONT>
+
+        ASSERT_EQ(answer[0], s -&gt; average_wall_clock_time);
+        ASSERT_EQ(answer[1], s -&gt; average_latency_time);
+        ASSERT_EQ(answer[2], s -&gt; total_run_time);
+        dyn_array_destroy(pcbs);
+<A NAME="7"></A>
+        score += 5;
+
+<FONT color="#c58917"><div style="position:absolute;left:0"><A HREF="javascript:ZweiFrames('match3-0.html#7',2,'match3-top.html#7',1)"><IMG SRC="back.gif" ALT="other" BORDER="0" ALIGN="left"></A></div><B>}
+
+int main(int argc, char **argv) {
+    ::testing::InitGoogleTest(&amp;argc, argv);
+    ::testing::AddGlobalTestEnvironment(new GradeEnvironment);
+    return RUN_ALL_TESTS();
+
+}</B></FONT>
+</PRE>
+</BODY>
+</HTML>

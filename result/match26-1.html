@@ -1,0 +1,154 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD>
+ <TITLE>jnfvy4</TITLE>
+<META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <script type="text/javascript">
+  <!--
+   function ZweiFrames(URL1,F1,URL2,F2)
+   {
+    parent.frames[F1].location.href=URL1;
+    parent.frames[F2].location.href=URL2;
+   }
+  //-->
+  </script>
+</HEAD>
+<BODY BGCOLOR="#ffffff" style="margin-left:25">
+<HR>
+<H3><CENTER>test/tests.cpp</CENTER></H3><HR>
+<PRE>
+#include &lt;fcntl.h&gt;
+#include &lt;stdio.h&gt;
+#include &quot;gtest/gtest.h&quot;
+#include &lt;pthread.h&gt;
+<A NAME="0"></A>#include &quot;../include/processing_scheduling.h&quot;
+
+// Using a C library requires extern &quot;C&quot; to prevent function managling
+<FONT color="#0000ff"><div style="position:absolute;left:0"><A HREF="javascript:ZweiFrames('match26-0.html#0',2,'match26-top.html#0',1)"><IMG SRC="back.gif" ALT="other" BORDER="0" ALIGN="left"></A></div><B>extern &quot;C&quot; {
+#include &lt;dyn_array.h&gt;
+}
+
+
+#define NUM_PCB 30
+#define QUANTUM 4 // Used for Robin Round for process as the run time limit
+
+unsigned int score;
+unsigned int total;
+
+class GradeEnvironment : public testing::Environment {
+    public:
+        virtual void SetUp() {
+            score = 0;
+            total = 160;
+        }
+        virtual void TearDown() {
+            ::testing::Test::RecordProperty(&quot;points_given&quot;, score);
+            ::testing::Test::RecordProperty(&quot;points_total&quot;, total);
+            std::cout &lt;&lt; &quot;SCORE: &quot; &lt;&lt; score &lt;&lt; '/' &lt;&lt; total &lt;&lt; std::endl;
+        }
+};
+
+// 3 Tests for Load Process Control Blocks
+<A NAME="2"></A>
+TEST(load_process_control_blocks, nullPath){
+    dyn_array_t* dynArr = load_process_control_blocks(NULL);</B></FONT>
+<FONT color="#77bfc7"><div style="position:absolute;left:0"><A HREF="javascript:ZweiFrames('match26-0.html#2',2,'match26-top.html#2',1)"><IMG SRC="back.gif" ALT="other" BORDER="0" ALIGN="left"></A></div><B>    ASSERT_EQ(dynArr, (dyn_array_t*)NULL);
+}
+
+TEST(load_process_control_blocks, fileNotFound){
+    dyn_array_t* dynArr = load_process_control_blocks(NULL);
+    ASSERT_EQ(dynArr, (dyn_array_t*)NULL);
+}
+
+TEST(load_process_control_blocks, fakeFile){
+    dyn_array_t* dynArr = load_process_control_blocks(&quot;madeup.pdf&quot;);
+    ASSERT_EQ(dynArr, (dyn_array_t*)NULL);
+}
+
+// 3 Tests for First Come First Serve 
+TEST (first_come_first_serve, queueCheck){
+    dyn_array_t *queue = dyn_array_create(1, 1, NULL);</B></FONT>
+    ScheduleResult_t *result = (ScheduleResult_t *)malloc(sizeof(ScheduleResult_t));
+    int success = priority(queue, result);
+    ASSERT_EQ(false, success);
+} 
+
+TEST (first_come_first_serve, nullResult){
+    ScheduleResult_t* sr = NULL;
+    dyn_array_t* procCon = dyn_array_create(0, sizeof(ProcessControlBlock_t), NULL);
+    bool res = first_come_first_serve(procCon, sr);
+    EXPECT_EQ(false, res);
+    dyn_array_destroy(procCon);
+}
+<A NAME="1"></A>
+TEST (first_come_first_serve, nullReadyQueue){
+    ScheduleResult_t *schRes = (ScheduleResult_t *)malloc(sizeof(ScheduleResult_t));
+<FONT color="#f63526"><div style="position:absolute;left:0"><A HREF="javascript:ZweiFrames('match26-0.html#1',2,'match26-top.html#1',1)"><IMG SRC="back.gif" ALT="other" BORDER="0" ALIGN="left"></A></div><B>    dyn_array_t* pronCon = NULL;
+    bool res = first_come_first_serve(pronCon, schRes);
+    EXPECT_EQ(false, res);
+    delete schRes;
+}
+
+// 3 Tests for Priority 
+TEST (priority, nullResult){
+    ScheduleResult_t* sr = NULL;
+    dyn_array_t* procCon = dyn_array_create(0, sizeof(ProcessControlBlock_t), NULL);
+    bool res = priority(procCon, sr);
+    EXPECT_EQ(false, res);
+    dyn_array_destroy(procCon);
+}
+
+TEST (priority, nullReadyQueue){
+    ScheduleResult_t *schRes = (ScheduleResult_t *)malloc(sizeof(ScheduleResult_t));</B></FONT>
+    dyn_array_t* pronCon = NULL;
+    bool res = priority(pronCon, schRes);
+    EXPECT_EQ(false, res);
+    delete schRes;
+}
+
+TEST (priority, noNegativeBlocks){
+    dyn_array_t *queue = dyn_array_create(2, 5, NULL);
+    ScheduleResult_t *result = (ScheduleResult_t *)malloc(sizeof(ScheduleResult_t));
+    int success = priority(queue, result);
+    ASSERT_EQ(false, success);
+}
+
+
+// 3 Tests for round_robin
+TEST (round_robin, nullResult){
+    ScheduleResult_t* sr = NULL;
+    dyn_array_t* procCon = dyn_array_create(0, sizeof(ProcessControlBlock_t), NULL);
+    bool res = round_robin(procCon, sr, QUANTUM);
+    EXPECT_EQ(false, res);
+    dyn_array_destroy(procCon);
+}
+
+TEST (round_robin, nullReadyQueue){ 
+    ScheduleResult_t *schRes = (ScheduleResult_t *)malloc(sizeof(ScheduleResult_t));
+    dyn_array_t* pronCon = NULL;
+    bool res = round_robin(pronCon, schRes, QUANTUM);
+    EXPECT_EQ(false, res);
+    delete schRes;
+}
+
+TEST (round_robin, quantumCheck){
+    dyn_array_t *queue = dyn_array_create(1, 1, NULL);
+    ScheduleResult_t *result = (ScheduleResult_t *)malloc(sizeof(ScheduleResult_t));
+    size_t quantum = -2;
+<A NAME="3"></A>    //printf(&quot;%lu&quot;, quantum);
+    int success = round_robin(queue, result, (size_t)quantum);
+    ASSERT_EQ(false, success);
+<FONT color="#6cc417"><div style="position:absolute;left:0"><A HREF="javascript:ZweiFrames('match26-0.html#3',2,'match26-top.html#3',1)"><IMG SRC="back.gif" ALT="other" BORDER="0" ALIGN="left"></A></div><B>}
+
+
+
+int main(int argc, char **argv) {
+    ::testing::InitGoogleTest(&amp;argc, argv);
+    ::testing::AddGlobalTestEnvironment(new GradeEnvironment);
+    return RUN_ALL_TESTS();
+}</B></FONT>
+
+
+</PRE>
+</BODY>
+</HTML>

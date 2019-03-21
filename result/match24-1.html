@@ -1,0 +1,140 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD>
+ <TITLE>btb5mq</TITLE>
+<META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <script type="text/javascript">
+  <!--
+   function ZweiFrames(URL1,F1,URL2,F2)
+   {
+    parent.frames[F1].location.href=URL1;
+    parent.frames[F2].location.href=URL2;
+   }
+  //-->
+  </script>
+</HEAD>
+<BODY BGCOLOR="#ffffff" style="margin-left:25">
+<HR>
+<H3><CENTER>test/tests.cpp</CENTER></H3><HR>
+<PRE>
+#include &lt;fcntl.h&gt;
+#include &lt;stdio.h&gt;
+#include &quot;gtest/gtest.h&quot;
+<A NAME="0"></A>#include &lt;pthread.h&gt;
+#include &quot;../include/processing_scheduling.h&quot;
+// Using a C library requires extern &quot;C&quot; to prevent function managling
+<FONT color="#0000ff"><div style="position:absolute;left:0"><A HREF="javascript:ZweiFrames('match24-0.html#0',2,'match24-top.html#0',1)"><IMG SRC="back.gif" ALT="other" BORDER="0" ALIGN="left"></A></div><B>extern &quot;C&quot; {
+#include &lt;dyn_array.h&gt;
+#include &lt;stdio.h&gt;    
+#include &lt;unistd.h&gt;
+}
+
+
+#define NUM_PCB 30
+#define QUANTUM 4 // Used for Robin Round for process as the run time limit
+
+unsigned int score;
+unsigned int total;
+
+class GradeEnvironment : public testing::Environment {
+    public:
+        virtual void SetUp() {
+            score = 0;
+            total = 160;
+        }
+        virtual void TearDown() {
+            ::testing::Test::RecordProperty(&quot;points_given&quot;, score);
+            ::testing::Test::RecordProperty(&quot;points_total&quot;, total);
+            std::cout &lt;&lt; &quot;SCORE: &quot; &lt;&lt; score &lt;&lt; '/' &lt;&lt; total &lt;&lt; std::endl;
+        }
+};</B></FONT>
+
+
+TEST(load_process_control_blocks, null_string){
+    EXPECT_EQ((dyn_array_t *)NULL,  load_process_control_blocks((char *)NULL));
+}
+TEST(load_process_control_blocks, empty_filename){
+    char test[] = &quot;/fake_file_name&quot;;
+    EXPECT_EQ((dyn_array_t *)NULL,  load_process_control_blocks(test));
+<A NAME="1"></A>}
+TEST(load_process_control_blocks, invalid_file_name){
+   char test[] = &quot;/invalid file name&quot;;
+<FONT color="#f63526"><div style="position:absolute;left:0"><A HREF="javascript:ZweiFrames('match24-0.html#1',2,'match24-top.html#1',1)"><IMG SRC="back.gif" ALT="other" BORDER="0" ALIGN="left"></A></div><B>   EXPECT_EQ((dyn_array_t *)NULL,  load_process_control_blocks(test)); 
+}
+
+
+TEST(first_come_first_serve, null_result){
+    dyn_array_t *test = dyn_array_create(5, 5, NULL);
+
+    EXPECT_EQ(false, first_come_first_serve(test, (ScheduleResult_t *)NULL));
+
+    free(test);
+}
+
+TEST(first_come_first_serve, null_ready_queue){
+    ScheduleResult_t* test = (ScheduleResult_t *)malloc(sizeof(ScheduleResult_t));
+
+    EXPECT_EQ(false, first_come_first_serve((dyn_array_t *)NULL, test));
+
+    free(test);
+}
+TEST(first_come_first_serve, both_params_null){</B></FONT>
+    EXPECT_EQ(false, first_come_first_serve((dyn_array_t *)NULL, (ScheduleResult_t *)NULL));
+}
+
+
+TEST(priority, null_result){
+    dyn_array_t *test = dyn_array_create(5, 5, NULL);
+
+    EXPECT_EQ(false, priority(test, (ScheduleResult_t *)NULL));
+
+    free(test);
+}
+TEST(priority, null_ready_queue){
+    ScheduleResult_t* test = (ScheduleResult_t *)malloc(sizeof(ScheduleResult_t));
+
+    EXPECT_EQ(false, priority((dyn_array_t *)NULL, test));
+
+    free(test);
+<A NAME="2"></A>}
+TEST(priority, both_params_null){
+    EXPECT_EQ(false, priority((dyn_array_t *)NULL, (ScheduleResult_t *)NULL));
+<FONT color="#77bfc7"><div style="position:absolute;left:0"><A HREF="javascript:ZweiFrames('match24-0.html#2',2,'match24-top.html#2',1)"><IMG SRC="back.gif" ALT="other" BORDER="0" ALIGN="left"></A></div><B>}
+
+
+TEST(round_robin, null_result){
+    dyn_array_t *test = dyn_array_create(5, 5, NULL);
+
+    EXPECT_EQ(false, round_robin(test, (ScheduleResult_t *)NULL, 4));
+
+    free(test);
+}
+TEST(round_robin, null_ready_queue){
+    ScheduleResult_t* test = (ScheduleResult_t *)malloc(sizeof(ScheduleResult_t));
+
+    EXPECT_EQ(false, round_robin((dyn_array_t *)NULL, test, 4));
+
+    free(test);
+}
+TEST(round_robin, zero_quantum){
+    ScheduleResult_t* test = (ScheduleResult_t *)malloc(sizeof(ScheduleResult_t));
+    dyn_array_t *test1 = dyn_array_create(5, 5, NULL);</B></FONT>
+
+    EXPECT_EQ(false, round_robin(test1, test, 0));    
+}
+
+
+
+
+
+int main(int argc, char **argv) {
+    ::testing::InitGoogleTest(&amp;argc, argv);
+    ::testing::AddGlobalTestEnvironment(new GradeEnvironment);
+    return RUN_ALL_TESTS();
+
+}
+
+
+</PRE>
+</BODY>
+</HTML>

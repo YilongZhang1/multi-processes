@@ -1,0 +1,237 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD>
+ <TITLE>chfgy5</TITLE>
+<META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <script type="text/javascript">
+  <!--
+   function ZweiFrames(URL1,F1,URL2,F2)
+   {
+    parent.frames[F1].location.href=URL1;
+    parent.frames[F2].location.href=URL2;
+   }
+  //-->
+  </script>
+</HEAD>
+<BODY BGCOLOR="#ffffff">
+<HR>
+<H3><CENTER>test/tests.cpp</CENTER></H3><HR>
+<PRE>
+#include &lt;fcntl.h&gt;
+#include &lt;stdio.h&gt;
+#include &quot;gtest/gtest.h&quot;
+<A NAME="0"></A>#include &lt;pthread.h&gt;
+#include &quot;../include/processing_scheduling.h&quot;
+// Using a C library requires extern &quot;C&quot; to prevent function managling
+<FONT color="#0000ff"><A HREF="javascript:ZweiFrames('match45-1.html#0',3,'match45-top.html#0',1)"><IMG SRC="forward.gif" ALT="other" BORDER="0" ALIGN="right"></A><B>extern &quot;C&quot; {
+#include &lt;dyn_array.h&gt;
+}
+
+#define NUM_PCB 30
+#define QUANTUM 4 // Used for Robin Round for process as the run time limit
+
+unsigned int score;
+unsigned int total;
+
+class GradeEnvironment : public testing::Environment {
+    public:
+        virtual void SetUp() {
+            score = 0;
+            total = 160;
+        }
+        virtual void TearDown() {
+            ::testing::Test::RecordProperty(&quot;points_given&quot;, score);
+            ::testing::Test::RecordProperty(&quot;points_total&quot;, total);
+            std::cout &lt;&lt; &quot;SCORE: &quot; &lt;&lt; score &lt;&lt; '/' &lt;&lt; total &lt;&lt; std::endl;
+        }
+};
+
+int main(int argc, char **argv) {
+    ::testing::InitGoogleTest(&amp;argc, argv);
+    ::testing::AddGlobalTestEnvironment(new GradeEnvironment);
+    return RUN_ALL_TESTS();
+
+}</B></FONT>
+
+// Load process control blocks tests
+TEST(load_process_control_blocks, null_file){
+    char* file = NULL;
+    dyn_array_t* expected = NULL;
+
+    dyn_array_t* actual = load_process_control_blocks(file);
+
+    ASSERT_EQ(expected, actual);
+}
+
+TEST(load_process_control_blocks, nonexistant_file){
+    const char* file = &quot;fakefile.bin&quot;;
+    dyn_array_t* expected = NULL;
+
+    dyn_array_t* actual = load_process_control_blocks(file);
+
+    ASSERT_EQ(expected, actual);
+}
+
+TEST(load_process_control_blocks, good_file){
+    const char* file = &quot;file.bin&quot;;
+
+    dyn_array_t* actual = load_process_control_blocks(file);
+
+    ASSERT_NE(0, sizeof(actual));
+    free(actual);
+}
+
+// first_come_first_serve tests
+TEST(first_come_first_serve, null_ready_queue){
+    dyn_array_t* ready_queue = NULL;
+    ScheduleResult_t* result = (ScheduleResult_t*) malloc(sizeof(ScheduleResult_t));
+    bool expected = false;
+
+    bool actual = first_come_first_serve(ready_queue, result);
+
+    ASSERT_EQ(expected, actual);
+    free(result);
+}
+
+TEST(first_come_first_serve, null_result){
+    dyn_array_t* ready_queue = (dyn_array_t*) malloc(sizeof(ProcessControlBlock_t));
+    ScheduleResult_t* result = NULL;
+    bool expected = false;
+
+    bool actual = first_come_first_serve(ready_queue, result);
+
+    ASSERT_EQ(expected, actual);
+    free(ready_queue);
+}
+
+TEST(first_come_first_serve, good_params){
+    dyn_array_t* ready_queue = (dyn_array_t*) malloc(sizeof(ProcessControlBlock_t));
+    ScheduleResult_t* result = (ScheduleResult_t*) malloc(sizeof(ScheduleResult_t));
+    bool expected = true;
+
+    bool actual = first_come_first_serve(ready_queue, result);
+
+    ASSERT_EQ(expected, actual);
+    free(ready_queue);
+    free(result);
+}
+
+// priority tests
+TEST(priority, null_ready_queue){
+    dyn_array_t* ready_queue = NULL;
+    ScheduleResult_t* result = (ScheduleResult_t*) malloc(sizeof(ScheduleResult_t));
+    bool expected = false;
+
+    bool actual = priority(ready_queue, result);
+
+    ASSERT_EQ(expected, actual);
+    free(result);
+}
+
+TEST(priority, null_result){
+    dyn_array_t* ready_queue = (dyn_array_t*) malloc(sizeof(ProcessControlBlock_t));
+    ScheduleResult_t* result = NULL;
+    bool expected = false;
+
+    bool actual = priority(ready_queue, result);
+
+    ASSERT_EQ(expected, actual);
+    free(ready_queue);
+}
+
+TEST(priority, good_params){
+    dyn_array_t* ready_queue = (dyn_array_t*) malloc(sizeof(ProcessControlBlock_t));
+    ScheduleResult_t* result = (ScheduleResult_t*) malloc(sizeof(ScheduleResult_t));
+    bool expected = true;
+
+    bool actual = priority(ready_queue, result);
+
+    ASSERT_EQ(expected, actual);
+    free(ready_queue);
+    free(result);
+}
+
+// round_robin tests
+TEST(round_robin, null_ready_queue){
+    dyn_array_t* ready_queue = NULL;
+    ScheduleResult_t* result = (ScheduleResult_t*) malloc(sizeof(ScheduleResult_t));
+    bool expected = false;
+
+    bool actual = round_robin(ready_queue, result, QUANTUM);
+
+    ASSERT_EQ(expected, actual);
+    free(result);
+}
+
+TEST(round_robin, null_result){
+    dyn_array_t* ready_queue = (dyn_array_t*) malloc(sizeof(ProcessControlBlock_t));
+    ScheduleResult_t* result = NULL;
+    bool expected = false;
+
+    bool actual = round_robin(ready_queue, result, QUANTUM);
+
+    ASSERT_EQ(expected, actual);
+    free(ready_queue);
+}
+
+TEST(round_robin, zero_quantum){
+    dyn_array_t* ready_queue = (dyn_array_t*) malloc(sizeof(ProcessControlBlock_t));
+    ScheduleResult_t* result = (ScheduleResult_t*) malloc(sizeof(ScheduleResult_t));
+    bool expected = false;
+
+    bool actual = round_robin(ready_queue, result, 0);
+
+    ASSERT_EQ(expected, actual);
+    free(ready_queue);
+    free(result);
+}
+
+TEST(round_robin, good_params){
+    dyn_array_t* ready_queue = (dyn_array_t*) malloc(sizeof(ProcessControlBlock_t));
+    ScheduleResult_t* result = (ScheduleResult_t*) malloc(sizeof(ScheduleResult_t));
+    bool expected = true;
+
+    bool actual = round_robin(ready_queue, result, QUANTUM);
+
+    ASSERT_EQ(expected, actual);
+    free(ready_queue);
+    free(result);
+}
+
+// shortest_job_first tests
+TEST(shortest_job_first, null_ready_queue){
+    dyn_array_t* ready_queue = NULL;
+    ScheduleResult_t* result = (ScheduleResult_t*) malloc(sizeof(ScheduleResult_t));
+    bool expected = false;
+
+    bool actual = shortest_job_first(ready_queue, result);
+
+    ASSERT_EQ(expected, actual);
+    free(result);
+}
+
+TEST(shortest_job_first, null_result){
+    dyn_array_t* ready_queue = (dyn_array_t*) malloc(sizeof(ProcessControlBlock_t));
+    ScheduleResult_t* result = NULL;
+    bool expected = false;
+
+    bool actual = shortest_job_first(ready_queue, result);
+
+    ASSERT_EQ(expected, actual);
+    free(ready_queue);
+}
+
+TEST(shortest_job_first, good_params){
+    dyn_array_t* ready_queue = (dyn_array_t*) malloc(sizeof(ProcessControlBlock_t));
+    ScheduleResult_t* result = (ScheduleResult_t*) malloc(sizeof(ScheduleResult_t));
+    bool expected = true;
+
+    bool actual = shortest_job_first(ready_queue, result);
+
+    ASSERT_EQ(expected, actual);
+    free(ready_queue);
+    free(result);
+}
+</PRE>
+</BODY>
+</HTML>

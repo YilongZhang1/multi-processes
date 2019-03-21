@@ -1,0 +1,232 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD>
+ <TITLE>jy6vd</TITLE>
+<META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <script type="text/javascript">
+  <!--
+   function ZweiFrames(URL1,F1,URL2,F2)
+   {
+    parent.frames[F1].location.href=URL1;
+    parent.frames[F2].location.href=URL2;
+   }
+  //-->
+  </script>
+</HEAD>
+<BODY BGCOLOR="#ffffff" style="margin-left:25">
+<HR>
+<H3><CENTER>test/tests.cpp</CENTER></H3><HR>
+<PRE>
+#include &lt;fcntl.h&gt;
+#include &lt;stdio.h&gt;
+#include &quot;gtest/gtest.h&quot;
+<A NAME="0"></A>#include &lt;pthread.h&gt;
+#include &quot;../include/processing_scheduling.h&quot;
+// Using a C library requires extern &quot;C&quot; to prevent function managling
+<FONT color="#0000ff"><div style="position:absolute;left:0"><A HREF="javascript:ZweiFrames('match18-0.html#0',2,'match18-top.html#0',1)"><IMG SRC="back.gif" ALT="other" BORDER="0" ALIGN="left"></A></div><B>extern &quot;C&quot; {
+#include &lt;dyn_array.h&gt;
+}
+
+
+#define NUM_PCB 30
+#define QUANTUM 4 // Used for Robin Round for process as the run time limit
+
+unsigned int score;
+unsigned int total;
+
+class GradeEnvironment : public testing::Environment {
+    public:
+        virtual void SetUp() {
+            score = 0;
+            total = 160;
+        }
+        virtual void TearDown() {
+            ::testing::Test::RecordProperty(&quot;points_given&quot;, score);
+            ::testing::Test::RecordProperty(&quot;points_total&quot;, total);
+            std::cout &lt;&lt; &quot;SCORE: &quot; &lt;&lt; score &lt;&lt; '/' &lt;&lt; total &lt;&lt; std::endl;
+        }
+};
+
+/*Load process control blocks tests*/
+TEST (load_process_control_blocks,nullFile){
+	dyn_array_t* dyn_array = load_process_control_blocks(NULL);</B></FONT>
+	EXPECT_EQ(NULL, dyn_array);
+}
+
+TEST (load_process_control_blocks, badFilePath){
+	dyn_array_t* dyn_array = load_process_control_blocks(&quot;BadFilePath.Path&quot;);
+	EXPECT_EQ(NULL, dyn_array);
+}
+
+TEST (load_process_control_blocks, badWriteFileName){
+	const char* fname = &quot;../test/PCB.bin&quot;;
+	int pcb_total = NUM_PCB;
+	int pcb[NUM_PCB][2];
+	for(int i = 0; i &lt; pcb_total; i++){
+		pcb[i][0] = rand() % 50 + 1;
+		pcb[i][1] = i;
+	}
+	int flags =  O_CREAT | O_TRUNC | O_WRONLY;
+	int file_open_to_write = open(fname,flags);
+	
+	write(file_open_to_write, &amp;total,sizeof(int));
+	write(file_open_to_write, pcb, 0);
+	
+	close(file_open_to_write);
+
+	dyn_array_t* dyn_array = load_process_control_blocks(fname);
+	ASSERT_EQ(dyn_array,(dyn_array_t*)NULL);
+	
+	dyn_array_destroy(dyn_array);
+	
+}
+
+/*First come first serve tests*/
+
+TEST (first_come_first_serve, nullQueue){
+	dyn_array_t* ready_queue = NULL;
+	ScheduleResult_t *schedule_result = (ScheduleResult_t*)calloc(0,sizeof(ScheduleResult_t));
+
+	bool test = first_come_first_serve(ready_queue, schedule_result);
+	ASSERT_EQ(false, test);
+	
+	delete schedule_result;
+}
+
+TEST (first_come_first_serve, nullResult){
+	ScheduleResult_t *schedule_result = NULL;
+	dyn_array_t *ready_queue = dyn_array_create(0, sizeof(ProcessControlBlock_t),NULL);
+	
+	bool test = first_come_first_serve(ready_queue, schedule_result);
+	ASSERT_EQ(false,test);
+	dyn_array_destroy(ready_queue);
+}
+
+TEST (first_come_first_serve, goodResult){
+<A NAME="1"></A>	ScheduleResult_t *schedule_result = (ScheduleResult_t*)calloc(0,sizeof(ScheduleResult_t));
+	dyn_array_t* ready_queue = dyn_array_create(0,sizeof(ProcessControlBlock_t),NULL);
+
+<FONT color="#f63526"><div style="position:absolute;left:0"><A HREF="javascript:ZweiFrames('match18-0.html#1',2,'match18-top.html#1',1)"><IMG SRC="back.gif" ALT="other" BORDER="0" ALIGN="left"></A></div><B>	ProcessControlBlock_t data[3] = {
+		[0] = {3,0,0},
+		[1] = {9,0,0},
+		[2] = {18,0,0},
+	};
+	dyn_array_push_back(ready_queue, &amp;data[2]);
+	dyn_array_push_back(ready_queue, &amp;data[1]);
+        dyn_array_push_back(ready_queue, &amp;data[0]);
+
+	bool test = first_come_first_serve(ready_queue, schedule_result);
+	ASSERT_EQ(true,test);
+
+        ASSERT_EQ(30,schedule_result-&gt;total_run_time);	
+	ASSERT_EQ(5, schedule_result-&gt;average_latency_time);
+	ASSERT_EQ(15, schedule_result-&gt;average_wall_clock_time);
+
+	
+	delete schedule_result;
+	dyn_array_destroy(ready_queue);
+}
+
+/* Priority tests */
+
+TEST (priority, nullQueue){
+<A NAME="2"></A>	dyn_array_t *ready_queue = NULL;
+	ScheduleResult_t *schedule_result = (ScheduleResult_t*)calloc(0,sizeof(ScheduleResult_t));</B></FONT>
+	
+<FONT color="#77bfc7"><div style="position:absolute;left:0"><A HREF="javascript:ZweiFrames('match18-0.html#2',2,'match18-top.html#2',1)"><IMG SRC="back.gif" ALT="other" BORDER="0" ALIGN="left"></A></div><B>	bool test = priority(ready_queue, schedule_result);
+	ASSERT_EQ(false,test);
+	delete schedule_result;
+}
+
+TEST (priority, nullResult){
+	dyn_array_t *ready_queue = dyn_array_create(0,sizeof(ProcessControlBlock_t),NULL);
+	ScheduleResult_t *schedule_result = NULL;
+	
+	bool test = priority(ready_queue,schedule_result);
+	ASSERT_EQ(false,test);
+	
+	dyn_array_destroy(ready_queue);
+}
+TEST (priority, goodResult){
+<A NAME="3"></A>	dyn_array_t *ready_queue = dyn_array_create(0, sizeof(ProcessControlBlock_t),NULL);
+	ScheduleResult_t *schedule_result = (ScheduleResult_t*)calloc(0,sizeof(ScheduleResult_t));</B></FONT>
+	
+<FONT color="#6cc417"><div style="position:absolute;left:0"><A HREF="javascript:ZweiFrames('match18-0.html#3',2,'match18-top.html#3',1)"><IMG SRC="back.gif" ALT="other" BORDER="0" ALIGN="left"></A></div><B>	ProcessControlBlock_t data[3] = {
+		[0] = {3,1, 0},
+		[1] = {9,2, 0},
+		[2] = {18,3, 0},
+	};
+	dyn_array_push_back(ready_queue, &amp;data[2]);
+	dyn_array_push_back(ready_queue, &amp;data[1]);
+	dyn_array_push_back(ready_queue, &amp;data[0]);
+	
+	bool test = priority(ready_queue, schedule_result);
+	ASSERT_EQ(true, test);
+	
+        ASSERT_EQ(30,schedule_result-&gt;total_run_time);
+	ASSERT_EQ(5,schedule_result-&gt;average_latency_time);
+	ASSERT_EQ(15,schedule_result-&gt;average_wall_clock_time);
+
+
+	delete schedule_result;
+	dyn_array_destroy(ready_queue);
+}
+
+/* Round Robin Test*/
+
+TEST (round_robin, nullQueue){
+<A NAME="4"></A>	dyn_array_t *ready_queue = NULL;
+	ScheduleResult_t *schedule_result = (ScheduleResult_t*)calloc(0,sizeof(ScheduleResult_t));</B></FONT>
+	
+<FONT color="#151b8d"><div style="position:absolute;left:0"><A HREF="javascript:ZweiFrames('match18-0.html#4',2,'match18-top.html#4',1)"><IMG SRC="back.gif" ALT="other" BORDER="0" ALIGN="left"></A></div><B>	bool test = round_robin(ready_queue, schedule_result,QUANTUM);
+	ASSERT_EQ(false,test);
+	
+	delete schedule_result;
+}
+
+TEST (round_robin,nullResult){
+	dyn_array_t *ready_queue = dyn_array_create(0, sizeof(ProcessControlBlock_t),NULL);
+	ScheduleResult_t *schedule_result = NULL;
+
+	bool test = round_robin(ready_queue, schedule_result, QUANTUM);
+	ASSERT_EQ(false,test);
+	
+	dyn_array_destroy(ready_queue);
+}
+
+TEST (round_robin, goodResult){
+	dyn_array_t *ready_queue = dyn_array_create(9,sizeof(ProcessControlBlock_t),NULL);
+	ScheduleResult_t *schedule_result = (ScheduleResult_t*)calloc(0,sizeof(ScheduleResult_t));</B></FONT>
+
+	ProcessControlBlock_t data[3] = {
+		[0] = {3,0,0},
+		[1] = {9,0,0},
+		[2] = {18,0,0},
+	};
+	dyn_array_push_back(ready_queue, &amp;data[2]);
+	dyn_array_push_back(ready_queue, &amp;data[1]);
+ 	dyn_array_push_back(ready_queue, &amp;data[0]);
+
+	bool test = round_robin(ready_queue, schedule_result, QUANTUM);
+	ASSERT_EQ(true, test);
+
+	ASSERT_EQ(30,schedule_result-&gt;total_run_time);
+<A NAME="5"></A>	ASSERT_EQ(8,schedule_result-&gt;average_latency_time);
+	ASSERT_EQ(17.66667,schedule_result-&gt;average_wall_clock_time);
+	
+<FONT color="#c8c2a7"><div style="position:absolute;left:0"><A HREF="javascript:ZweiFrames('match18-0.html#5',2,'match18-top.html#5',1)"><IMG SRC="back.gif" ALT="other" BORDER="0" ALIGN="left"></A></div><B>	delete schedule_result;
+	dyn_array_destroy(ready_queue);        
+        
+
+}
+
+int main(int argc, char **argv) {
+    ::testing::InitGoogleTest(&amp;argc, argv);
+    ::testing::AddGlobalTestEnvironment(new GradeEnvironment);
+    return RUN_ALL_TESTS();
+
+}</B></FONT>
+
+</PRE>
+</BODY>
+</HTML>

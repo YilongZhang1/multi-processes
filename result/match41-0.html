@@ -1,0 +1,133 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD>
+ <TITLE>jtwf54</TITLE>
+<META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <script type="text/javascript">
+  <!--
+   function ZweiFrames(URL1,F1,URL2,F2)
+   {
+    parent.frames[F1].location.href=URL1;
+    parent.frames[F2].location.href=URL2;
+   }
+  //-->
+  </script>
+</HEAD>
+<BODY BGCOLOR="#ffffff">
+<HR>
+<H3><CENTER>test/tests.cpp</CENTER></H3><HR>
+<PRE>
+#include &lt;fcntl.h&gt;
+#include &lt;stdio.h&gt;
+#include &quot;gtest/gtest.h&quot;
+<A NAME="0"></A>#include &lt;pthread.h&gt;
+#include &quot;../include/processing_scheduling.h&quot;
+// Using a C library requires extern &quot;C&quot; to prevent function managling
+<FONT color="#0000ff"><A HREF="javascript:ZweiFrames('match41-1.html#0',3,'match41-top.html#0',1)"><IMG SRC="forward.gif" ALT="other" BORDER="0" ALIGN="right"></A><B>extern &quot;C&quot; {
+    #include &lt;dyn_array.h&gt;
+}
+
+
+#define NUM_PCB 30
+#define QUANTUM 4 // Used for Robin Round for process as the run time limit
+
+unsigned int score;
+unsigned int total;
+
+class GradeEnvironment : public testing::Environment {
+    public:
+        virtual void SetUp() {
+            score = 0;
+            total = 160;
+        }
+        virtual void TearDown() {
+            ::testing::Test::RecordProperty(&quot;points_given&quot;, score);
+            ::testing::Test::RecordProperty(&quot;points_total&quot;, total);
+            std::cout &lt;&lt; &quot;SCORE: &quot; &lt;&lt; score &lt;&lt; '/' &lt;&lt; total &lt;&lt; std::endl;
+        }
+};
+
+int main(int argc, char **argv) {
+    ::testing::InitGoogleTest(&amp;argc, argv);
+    ::testing::AddGlobalTestEnvironment(new GradeEnvironment);
+    return RUN_ALL_TESTS();
+
+}</B></FONT>
+
+//tests for processing_scheduling.h functions
+TEST(load_process_control_blocks, NullFileName){
+    EXPECT_EQ((dyn_array_t*)NULL,load_process_control_blocks(NULL));
+}
+TEST(load_process_control_blocks, EmptyFile){
+    char filename[] = &quot;test.txt&quot;;
+    int fd = open(filename, O_RDWR | O_CREAT, S_IRUSR | S_IRGRP | S_IROTH);
+    close(fd);
+    EXPECT_EQ((dyn_array_t*)NULL,load_process_control_blocks(filename));
+}
+TEST(load_process_control_blocks, FileNotFound){
+    dyn_array_t *arr = load_process_control_blocks(&quot;ThisFileDoesNotExist.boi&quot;);
+    EXPECT_EQ((dyn_array_t*)NULL,arr);
+}
+
+TEST(first_come_first_serve, NullQueue){
+    ScheduleResult_t *t = new ScheduleResult_t;
+    EXPECT_EQ(false,first_come_first_serve((dyn_array_t*)NULL,t));
+    delete t;
+}
+TEST(first_come_first_serve, NullExpectation){
+    dyn_array_t *t = dyn_array_create(100,100,NULL);
+    EXPECT_EQ(false,first_come_first_serve(t,(ScheduleResult_t*)NULL));
+}
+TEST(first_come_first_serve, ValidFCFS){
+    dyn_array_t *t = dyn_array_create(100,100,NULL);
+    ScheduleResult_t *s = new ScheduleResult_t;
+    EXPECT_EQ(true,first_come_first_serve(t,s));
+}
+
+TEST(priority, NullQueue){
+    ScheduleResult_t *t = new ScheduleResult_t;
+    EXPECT_EQ(false,priority((dyn_array_t*)NULL,t));
+    delete t;
+}
+TEST(priority, NullExpectation){
+    dyn_array_t *t = dyn_array_create(100,100,NULL);
+    EXPECT_EQ(false,priority(t,(ScheduleResult_t*)NULL));
+}
+TEST(priority, ValidPriority){
+    dyn_array_t *t = dyn_array_create(100,100,NULL);
+    ScheduleResult_t *s = new ScheduleResult_t;
+    EXPECT_EQ(true,priority(t,s));
+}
+
+TEST(round_robin, NullQueue){
+    ScheduleResult_t *t = new ScheduleResult_t;
+    EXPECT_EQ(false,round_robin((dyn_array_t*)NULL,t,0));
+    delete t;
+}
+TEST(round_robin, NullExpectation){
+    dyn_array_t *t = dyn_array_create(100,100,NULL);
+    EXPECT_EQ(false,round_robin(t,(ScheduleResult_t*)NULL,0));
+}
+TEST(round_robin, ValidRoundRobin){
+    dyn_array_t *t = dyn_array_create(100,100,NULL);
+    ScheduleResult_t *s = new ScheduleResult_t;
+    EXPECT_EQ(true,round_robin(t,s,0));
+}
+
+TEST(shortest_job_first, NullQueue){
+    ScheduleResult_t *t = new ScheduleResult_t;
+    EXPECT_EQ(false,shortest_job_first((dyn_array_t*)NULL,t));
+    delete t;
+}
+TEST(shortest_job_first, NullExpectation){
+    dyn_array_t *t = dyn_array_create(100,100,NULL);
+    EXPECT_EQ(false,shortest_job_first(t,(ScheduleResult_t*)NULL));
+}
+TEST(shortest_job_first, ValidShortestJob){
+    dyn_array_t *t = dyn_array_create(100,100,NULL);
+    ScheduleResult_t *s = new ScheduleResult_t;
+    EXPECT_EQ(true,shortest_job_first(t,s));
+}
+</PRE>
+</BODY>
+</HTML>

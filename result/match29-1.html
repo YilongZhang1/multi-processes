@@ -1,0 +1,245 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD>
+ <TITLE>hd945</TITLE>
+<META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <script type="text/javascript">
+  <!--
+   function ZweiFrames(URL1,F1,URL2,F2)
+   {
+    parent.frames[F1].location.href=URL1;
+    parent.frames[F2].location.href=URL2;
+   }
+  //-->
+  </script>
+</HEAD>
+<BODY BGCOLOR="#ffffff" style="margin-left:25">
+<HR>
+<H3><CENTER>test/tests.cpp</CENTER></H3><HR>
+<PRE>
+#include &lt;fcntl.h&gt;
+#include &lt;stdio.h&gt;
+#include &quot;gtest/gtest.h&quot;
+#include &lt;pthread.h&gt;
+#include &quot;../include/processing_scheduling.h&quot;
+// Using a C library requires extern &quot;C&quot; to prevent function managling
+extern &quot;C&quot; {
+#include &lt;dyn_array.h&gt;
+}
+
+
+#define NUM_PCB 30
+#define QUANTUM 4 // Used for Robin Round for process as the run time limit
+
+unsigned int score;
+unsigned int total;
+
+class GradeEnvironment : public testing::Environment {
+    public:
+        virtual void SetUp() {
+            score = 0;
+            total = 160;
+        }
+        virtual void TearDown() {
+            ::testing::Test::RecordProperty(&quot;points_given&quot;, score);
+            ::testing::Test::RecordProperty(&quot;points_total&quot;, total);
+            std::cout &lt;&lt; &quot;SCORE: &quot; &lt;&lt; score &lt;&lt; '/' &lt;&lt; total &lt;&lt; std::endl;
+        }
+};
+
+// test for first_come_first_serve 
+
+//  1, Queue or Result is Null
+TEST (first_come_first_serve, NullQueue) {
+    ScheduleResult_t sch;
+	EXPECT_EQ(false,first_come_first_serve(NULL, &amp;sch));
+    dyn_array_t * array = dyn_array_create(0,sizeof(ProcessControlBlock_t), NULL);
+    EXPECT_EQ(false,first_come_first_serve(array, NULL));
+    dyn_array_destroy(array);
+}
+//  2, Data of queue is wrong
+TEST (first_come_first_serve, WrongQueue) {
+<A NAME="2"></A>    ScheduleResult_t sch;
+    dyn_array_t * array = dyn_array_create(0,sizeof(ProcessControlBlock_t), NULL);
+
+<FONT color="#77bfc7"><div style="position:absolute;left:0"><A HREF="javascript:ZweiFrames('match29-0.html#2',2,'match29-top.html#2',1)"><IMG SRC="back.gif" ALT="other" BORDER="0" ALIGN="left"></A></div><B>    ProcessControlBlock_t d0 = {-1, 0, false};
+    dyn_array_push_front(array, &amp;d0);
+    ProcessControlBlock_t d1 = {2, 0, false};
+    dyn_array_push_front(array, &amp;d1);
+    ProcessControlBlock_t d2 = {3, 0, false};
+    dyn_array_push_front(array, &amp;d2);
+    ProcessControlBlock_t d3 = {4, 0, false};
+    dyn_array_push_front(array, &amp;d3);
+    ProcessControlBlock_t d4 = {5, 0, false};
+    dyn_array_push_front(array, &amp;d4);
+    EXPECT_EQ(false,first_come_first_serve(array, &amp;sch));
+    dyn_array_destroy(array);
+}
+//  3, Right data
+TEST (first_come_first_serve, GoodQueue) {
+<A NAME="1"></A>    ScheduleResult_t sch;
+    dyn_array_t * array = dyn_array_create(0,sizeof(ProcessControlBlock_t), NULL);</B></FONT>
+
+<FONT color="#f63526"><div style="position:absolute;left:0"><A HREF="javascript:ZweiFrames('match29-0.html#1',2,'match29-top.html#1',1)"><IMG SRC="back.gif" ALT="other" BORDER="0" ALIGN="left"></A></div><B>    ProcessControlBlock_t d0 = {1, 0, false};
+    dyn_array_push_front(array, &amp;d0);
+    ProcessControlBlock_t d1 = {2, 0, false};
+    dyn_array_push_front(array, &amp;d1);
+    ProcessControlBlock_t d2 = {3, 0, false};
+    dyn_array_push_front(array, &amp;d2);
+    ProcessControlBlock_t d3 = {4, 0, false};
+    dyn_array_push_front(array, &amp;d3);
+    ProcessControlBlock_t d4 = {5, 0, false};
+    dyn_array_push_front(array, &amp;d4);
+    EXPECT_EQ(true,first_come_first_serve(array, &amp;sch));
+    EXPECT_FLOAT_EQ(4.0, sch.average_latency_time);
+    EXPECT_FLOAT_EQ(7.0, sch.average_wall_clock_time);
+    EXPECT_EQ(15L, sch.total_run_time);
+    dyn_array_destroy(array);
+
+
+}
+// test for priority
+
+//  4, Queue or Result is Null 
+TEST (priority, NullQueue) {</B></FONT>
+    ScheduleResult_t sch;
+	EXPECT_EQ(false,priority(NULL, &amp;sch));
+    dyn_array_t * array = dyn_array_create(0,sizeof(ProcessControlBlock_t), NULL);
+    EXPECT_EQ(false,priority(array, NULL));
+    dyn_array_destroy(array);
+} 
+//  5, Data of queue is wrong
+TEST (priority, BadQueue) {
+<A NAME="5"></A>    ScheduleResult_t sch;
+    dyn_array_t * array = dyn_array_create(0,sizeof(ProcessControlBlock_t), NULL);
+
+<FONT color="#c8c2a7"><div style="position:absolute;left:0"><A HREF="javascript:ZweiFrames('match29-0.html#5',2,'match29-top.html#5',1)"><IMG SRC="back.gif" ALT="other" BORDER="0" ALIGN="left"></A></div><B>    ProcessControlBlock_t d0 = {-1, 0, false};
+    dyn_array_push_front(array, &amp;d0);
+    ProcessControlBlock_t d1 = {2, 0, false};
+    dyn_array_push_front(array, &amp;d1);
+    ProcessControlBlock_t d2 = {3, 0, false};
+    dyn_array_push_front(array, &amp;d2);
+    ProcessControlBlock_t d3 = {4, 0, false};
+    dyn_array_push_front(array, &amp;d3);
+    ProcessControlBlock_t d4 = {5, 0, false};
+    dyn_array_push_front(array, &amp;d4);
+    EXPECT_EQ(false,priority(array, &amp;sch));
+    dyn_array_destroy(array);
+
+}
+//  6, Right data
+TEST (priority, GoodQueue) {</B></FONT>
+    ScheduleResult_t sch;
+    dyn_array_t * array = dyn_array_create(0,sizeof(ProcessControlBlock_t), NULL);
+<A NAME="3"></A>
+    ProcessControlBlock_t d0 = {1, 4, false};
+    dyn_array_push_front(array, &amp;d0);
+<FONT color="#6cc417"><div style="position:absolute;left:0"><A HREF="javascript:ZweiFrames('match29-0.html#3',2,'match29-top.html#3',1)"><IMG SRC="back.gif" ALT="other" BORDER="0" ALIGN="left"></A></div><B>    ProcessControlBlock_t d1 = {2, 3, false};
+    dyn_array_push_front(array, &amp;d1);
+    ProcessControlBlock_t d2 = {3, 2, false};
+    dyn_array_push_front(array, &amp;d2);
+    ProcessControlBlock_t d3 = {4, 1, false};
+    dyn_array_push_front(array, &amp;d3);
+    ProcessControlBlock_t d4 = {5, 0, false};
+    dyn_array_push_front(array, &amp;d4);
+    EXPECT_EQ(true,priority(array, &amp;sch));
+    EXPECT_FLOAT_EQ(8.0, sch.average_latency_time);
+    EXPECT_FLOAT_EQ(11.0, sch.average_wall_clock_time);
+    EXPECT_EQ(15L, sch.total_run_time);
+    dyn_array_destroy(array);
+
+}
+
+
+
+// test for round_robin
+
+//  7, Queue or Result is Null or quantum is lower than or equal to 0
+TEST (round_robin, WrongInput) {</B></FONT>
+    ScheduleResult_t sch;
+	EXPECT_EQ(false, round_robin(NULL, &amp;sch, 3));
+    dyn_array_t * array = dyn_array_create(0,sizeof(ProcessControlBlock_t), NULL);
+    EXPECT_EQ(false, round_robin(array, NULL, 3));
+    dyn_array_destroy(array);
+    dyn_array_t * array1 = dyn_array_create(0,sizeof(ProcessControlBlock_t), NULL);
+    EXPECT_EQ(false, round_robin(array1, &amp;sch, -3));
+    dyn_array_destroy(array1);
+
+}
+//  8, Data of queue is wrong
+TEST (round_robin, BadQueue) {
+    ScheduleResult_t sch;
+    dyn_array_t * array = dyn_array_create(0,sizeof(ProcessControlBlock_t), NULL);
+<A NAME="0"></A>
+    ProcessControlBlock_t d0 = {-1, 0, false};
+    dyn_array_push_front(array, &amp;d0);
+<FONT color="#0000ff"><div style="position:absolute;left:0"><A HREF="javascript:ZweiFrames('match29-0.html#0',2,'match29-top.html#0',1)"><IMG SRC="back.gif" ALT="other" BORDER="0" ALIGN="left"></A></div><B>    ProcessControlBlock_t d1 = {2, 0, false};
+    dyn_array_push_front(array, &amp;d1);
+    ProcessControlBlock_t d2 = {3, 0, false};
+    dyn_array_push_front(array, &amp;d2);
+    ProcessControlBlock_t d3 = {4, 0, false};
+    dyn_array_push_front(array, &amp;d3);
+    ProcessControlBlock_t d4 = {5, 0, false};
+    dyn_array_push_front(array, &amp;d4);
+    EXPECT_EQ(false,round_robin(array, &amp;sch, 3));
+    dyn_array_destroy(array);
+
+}
+
+
+
+//  9, Right data
+TEST (round_robin, GoodQueue) {
+    ScheduleResult_t sch;
+    dyn_array_t * array = dyn_array_create(0,sizeof(ProcessControlBlock_t), NULL);</B></FONT>
+<A NAME="4"></A>
+    ProcessControlBlock_t d0 = {1, 0, false};
+    dyn_array_push_front(array, &amp;d0);
+<FONT color="#151b8d"><div style="position:absolute;left:0"><A HREF="javascript:ZweiFrames('match29-0.html#4',2,'match29-top.html#4',1)"><IMG SRC="back.gif" ALT="other" BORDER="0" ALIGN="left"></A></div><B>    ProcessControlBlock_t d1 = {2, 0, false};
+    dyn_array_push_front(array, &amp;d1);
+    ProcessControlBlock_t d2 = {3, 0, false};
+    dyn_array_push_front(array, &amp;d2);
+    ProcessControlBlock_t d3 = {4, 0, false};
+    dyn_array_push_front(array, &amp;d3);
+    ProcessControlBlock_t d4 = {5, 0, false};
+    dyn_array_push_front(array, &amp;d4);
+    EXPECT_EQ(true,round_robin(array, &amp;sch, 3));
+    EXPECT_FLOAT_EQ(3.0, sch.average_latency_time);
+    EXPECT_FLOAT_EQ(7.0, sch.average_wall_clock_time);
+    EXPECT_EQ(15L, sch.total_run_time);
+    dyn_array_destroy(array);
+
+}
+
+// test for load_process_control_blocks
+
+//  10, Filename is Null
+TEST (load_process_control_blocks, NullFIleName) {</B></FONT>
+    char* filename = NULL;
+    EXPECT_EQ(false, load_process_control_blocks(filename));
+}
+
+//  11, Filename is not right
+TEST (load_process_control_blocks, WrongFIleName) {
+    char* filename = &quot;\n&quot;;
+    EXPECT_EQ(false, load_process_control_blocks(filename));
+}
+//  12, File is not exist
+<A NAME="6"></A>TEST (load_process_control_blocks, NotExistFIleName) {
+    char* filename = &quot;NotExistFile&quot;;
+    EXPECT_EQ(false, load_process_control_blocks(filename));
+<FONT color="#50ebec"><div style="position:absolute;left:0"><A HREF="javascript:ZweiFrames('match29-0.html#6',2,'match29-top.html#6',1)"><IMG SRC="back.gif" ALT="other" BORDER="0" ALIGN="left"></A></div><B>}
+
+
+
+int main(int argc, char **argv) {
+    ::testing::InitGoogleTest(&amp;argc, argv);
+    ::testing::AddGlobalTestEnvironment(new GradeEnvironment);
+    return RUN_ALL_TESTS();
+
+}</B></FONT>
+
+
+</PRE>
+</BODY>
+</HTML>

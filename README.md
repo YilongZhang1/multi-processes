@@ -1,16 +1,14 @@
-See PDF for full details.
+Data Files:
 
-Data Files on Teaching Cluster:
-
-/data/scottgs/hpc_1m.csv
-/data/scottgs/hpc_2m.csv
-/data/scottgs/hpc_3m.csv
-/data/scottgs/hpc_4m.csv
-/data/scottgs/hpc_5m.csv
-/data/scottgs/hpc_6m.csv
-/data/scottgs/hpc_7m.csv
-/data/scottgs/hpc_8m.csv
-/data/scottgs/hpc_9m.csv
+/data/hpc_1m.csv
+/data/hpc_2m.csv
+/data/hpc_3m.csv
+/data/hpc_4m.csv
+/data/hpc_5m.csv
+/data/hpc_6m.csv
+/data/hpc_7m.csv
+/data/hpc_8m.csv
+/data/hpc_9m.csv
 
 1. to run all the cases just run "sbatch analysis.sh" in command line.
 2. timing results for all cases will be stored in results.out file after running completion.
